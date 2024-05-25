@@ -12,9 +12,14 @@ import (
 	"strings"
 )
 
+// TODO: Auto cleanup the temporary files
+// TODO: Add logging
+// TODO: JSON response
+// TODO: Add Excel to PDF
+
 var TMP_PDF_PATH = os.Getenv("TMP_PDF_PATH")
 var TMP_DOCX_PATH = os.Getenv("TMP_DOCX_PATH")
-var LIBREOFFICE_PROFILES = os.Getenv("LIBREOFFICE_PROFILES") + "/" + helper.GenerateRandomString(10)
+var LIBREOFFICE_PROFILES = os.Getenv("LIBREOFFICE_PROFILES") + helper.GenerateRandomString(10)
 
 func downloadFile(filename string, w http.ResponseWriter, r *http.Request) error {
 	filename = strings.TrimSuffix(filename, ".docx")
