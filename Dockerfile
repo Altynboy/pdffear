@@ -1,34 +1,46 @@
-FROM golang:alpine
+# Stage 1: Builder
+FROM golang:1.25.6-alpine AS builder
 
-RUN apk update && apk add --no-cache libreoffice
-RUN apk add --no-cache msttcorefonts-installer fontconfig
-RUN update-ms-fonts
+WORKDIR /app
 
+# Cache dependencies
+COPY go.mod ./
+# COPY go.sum ./ # Uncomment if you have a go.sum
+RUN go mod download
 
-RUN apk --no-cache add openjdk11
-ENV JAVA_HOME /usr/lib/jvm/default-jvm
-
-
-# COPY go.mod ./
-# COPY go.mod go.sum ./
-# RUN go mod download
-
-RUN mkdir /tmp/generated_pdfs
-RUN mkdir /tmp/uploaded_docx
-RUN mkdir /tmp/libreoffice_profiles
-
-WORKDIR /pdffear
-
+# Copy source code
 COPY . .
 
+# Build the binary
+# -ldflags="-s -w" strips debug information to reduce binary size
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o pdffear .
+
+# Stage 2: Runtime
+FROM alpine:latest
+
+# Install runtime dependencies
+# Combine apk commands to reduce layers
+RUN apk add --no-cache \
+    libreoffice \
+    openjdk11-jre \
+    msttcorefonts-installer \
+    fontconfig && \
+    update-ms-fonts && \
+    fc-cache -f
+
+# Create necessary directories
+RUN mkdir -p /tmp/generated_pdfs /tmp/uploaded_docx /tmp/libreoffice_profiles
+
+# Copy the binary from the builder stage
+COPY --from=builder /app/pdffear /pdffear
+
+# Set environment variables (defaults)
 ENV TMP_PDF_PATH="/tmp/generated_pdfs/"
 ENV TMP_DOCX_PATH="/tmp/uploaded_docx/"
 ENV LIBREOFFICE_PROFILES="/tmp/libreoffice_profiles/"
 
-# Build
-RUN CGO_ENABLED=0 GOOS=linux go build -o /docker-gs-ping
-
+# Expose the application port
 EXPOSE 8080
 
-# Run
-CMD ["/docker-gs-ping"]
+# Run the application
+CMD ["/pdffear"]
