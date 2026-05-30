@@ -26,7 +26,7 @@ A Go-based service to convert `.docx` and `.xlsx` files to PDF using LibreOffice
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/Altynbekburkitbay/pdffear.git
+    git clone https://github.com/Altynboy/pdffear.git
     cd pdffear
     ```
 
